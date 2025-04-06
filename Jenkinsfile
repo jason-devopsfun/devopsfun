@@ -18,8 +18,11 @@ spec:
     volumeMounts:
     - name: workspace-volume
       mountPath: /home/gradle/project
+    - name: workspace-volume
+      mountPath: /home/jenkins/agent
+      readOnly: false
   - name: kaniko
-    image: gcr.io/kaniko-project/executor:debug  # Using debug version which has shell
+    image: gcr.io/kaniko-project/executor:debug
     command:
     - /busybox/sh
     args:
@@ -30,6 +33,9 @@ spec:
       mountPath: /workspace
     - name: kaniko-secret
       mountPath: /kaniko/.docker
+    - name: workspace-volume
+      mountPath: /home/jenkins/agent
+      readOnly: false
   volumes:
   - name: workspace-volume
     emptyDir: {}
@@ -44,7 +50,6 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
-        IMAGE = "jkendall1975/demo-api:\${BUILD_NUMBER}-\${GIT_COMMIT[0..7]}"
     }
 
     stages {
@@ -65,12 +70,19 @@ spec:
         stage('Build with Kaniko') {
             steps {
                 container('kaniko') {
-                    sh """
-                        /kaniko/executor \
-                          --context=\$PWD/devopsfun/demo-api \
-                          --dockerfile=\$PWD/devopsfun/demo-api/Dockerfile \
-                          --destination=${IMAGE}
-                    """
+                    script {
+                        // Get short commit hash
+                        def shortCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                        def imageTag = "${BUILD_NUMBER}-${shortCommit}"
+                        def fullImageName = "jkendall1975/demo-api:${imageTag}"
+                        
+                        sh """
+                            /kaniko/executor \
+                              --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
+                              --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
+                              --destination=${fullImageName}
+                        """
+                    }
                 }
             }
         }
