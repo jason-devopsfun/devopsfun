@@ -11,7 +11,7 @@ spec:
     - name: workspace-volume
       mountPath: /home/jenkins/agent
   - name: gradle
-    image: gradle:7.4.2-jdk11
+    image: gradle:8.6.0-jdk17
     command:
     - cat
     tty: true
