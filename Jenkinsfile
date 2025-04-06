@@ -31,15 +31,11 @@ spec:
     volumeMounts:
     - name: workspace-volume
       mountPath: /workspace
-    - name: docker-config
-      mountPath: /kaniko/.docker
     - name: workspace-volume
       mountPath: /home/jenkins/agent
       readOnly: false
   volumes:
   - name: workspace-volume
-    emptyDir: {}
-  - name: docker-config
     emptyDir: {}
 """
         }
@@ -49,7 +45,6 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // Create this credential in Jenkins
     }
 
     stages {
@@ -77,20 +72,6 @@ spec:
             }
         }
 
-        stage('Create Docker Config') {
-            steps {
-                // Create the Docker config.json file with authentication information
-                sh '''
-                    mkdir -p /home/jenkins/agent/workspace/docker-config
-                    echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}'  > /home/jenkins/agent/workspace/docker-config/config.json
-                    # Copy to kaniko's expected location
-                    cp /home/jenkins/agent/workspace/docker-config/config.json /kaniko/.docker/
-                    # Ensure readable
-                    chmod 600 /kaniko/.docker/config.json
-                '''
-            }
-        }
-
         stage('Build with Kaniko') {
             steps {
                 container('kaniko') {
@@ -98,7 +79,8 @@ spec:
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
-                          --destination=${FULL_IMAGE_NAME}
+                          --no-push \
+                          --tarPath=/home/jenkins/agent/workspace/demo-api-pipeline/image.tar
                     """
                 }
             }
