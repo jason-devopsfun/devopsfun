@@ -20,9 +20,11 @@ spec:
       mountPath: /home/gradle/project
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
+    imagePullPolicy: Always
     command:
-    - /busybox/cat
-    tty: true
+    - sleep
+    args:
+    - 9999999
     volumeMounts:
     - name: workspace-volume
       mountPath: /workspace
