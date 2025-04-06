@@ -1,5 +1,5 @@
 pipeline {
-      agent {
+    agent {
         kubernetes {
             yaml """
 apiVersion: v1
@@ -8,6 +8,7 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
+    workingDir: /workspace
     volumeMounts:
     - name: kaniko-secret
       mountPath: /kaniko/.docker
@@ -22,9 +23,9 @@ spec:
 
     environment {
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
-        DOCKER_IMAGE_NAME = 'demo-api' // Replace with your image name
+        DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
-        IMAGE = "jkendall1975/demo-api:v${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+        IMAGE = "jkendall1975/demo-api:\${BUILD_NUMBER}-\${GIT_COMMIT}"
     }
 
     stages {
@@ -52,12 +53,14 @@ spec:
         stage('Build with Kaniko') {
             steps {
                 container('kaniko') {
-                    sh '''
-                        /kaniko/executor \
-                          --context `pwd` \
-                          --dockerfile `pwd`/Dockerfile \
-                          --destination=${IMAGE}
-                    '''
+                    dir('devopsfun/demo-api') {
+                        sh '''
+                          /kaniko/executor \
+                            --context=/workspace/devopsfun/demo-api \
+                            --dockerfile=/workspace/devopsfun/demo-api/Dockerfile \
+                            --destination=${IMAGE}
+                        '''
+                    }
                 }
             }
         }
