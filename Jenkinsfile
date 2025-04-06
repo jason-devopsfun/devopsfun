@@ -30,6 +30,7 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             steps {
+                dir('devopsfun/demo-api') {
                 script {
                     def version = "v1.0.${BUILD_NUMBER}-${new Date().format('yyyyMMdd-HHmmss')}"
 
@@ -44,6 +45,7 @@ pipeline {
                     }
 
                     env.IMAGE_VERSION = version
+                }
                 }
             }
         }
