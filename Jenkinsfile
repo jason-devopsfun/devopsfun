@@ -35,6 +35,33 @@ pipeline {
                     }
                 }
             }
+
+
+         stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    // Generate a version tag based on build number and timestamp
+                    def version = "v1.0.${BUILD_NUMBER}-${new Date().format('yyyyMMdd-HHmmss')}"
+                    
+                    // Login to Docker Hub with credentials from 'dockerhub-credentials'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
+                        sh "echo ${DOCKER_HUB_PASSWORD} | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin"
+                    }
+                    
+                    // Build the Docker image
+                    sh "docker build -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${version} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest ."
+                    
+                    // Push the Docker image to Docker Hub
+                    sh "docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${version}"
+                    sh "docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest"
+                    
+                    // Save the version for use in next stage
+                    env.IMAGE_VERSION = version
+                }
+            }
+        }
+        
+
         }
     }
 }
