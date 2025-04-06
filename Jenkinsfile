@@ -24,13 +24,15 @@ pipeline {
         }
 
         stage('Build Application') {
-             script {
-                    // Change to the demo-api directory
-                    dir('demo-api') {
+            steps {
+                script {
+                    // Change to the demo-api directory inside the cloned repo
+                    dir('devopsfun/demo-api') {
                         // Run Gradle build in the demo-api directory
                         sh './gradlew clean build'
                     }
                 }
+            }
         }
     }
 }
