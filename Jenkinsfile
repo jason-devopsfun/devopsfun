@@ -21,11 +21,14 @@ pipeline {
                     }
                 }
             }
-        }
-    }
-        stage('Build Application') {
+
+         stage('Build Application') {
             steps {
                 sh './gradlew clean build'
             }
         }
+        
+        }
+    }
+       
 }
