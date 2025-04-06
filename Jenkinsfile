@@ -24,10 +24,13 @@ pipeline {
         }
 
         stage('Build Application') {
-            steps {
-                // Run the Gradle build
-                sh './gradlew clean build'
-            }
+             script {
+                    // Change to the demo-api directory
+                    dir('demo-api') {
+                        // Run Gradle build in the demo-api directory
+                        sh './gradlew clean build'
+                    }
+                }
         }
     }
 }
