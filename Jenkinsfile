@@ -1,10 +1,34 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: kaniko
+    image: gcr.io/kaniko-project/executor:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: kaniko-secret
+      mountPath: /kaniko/.docker
+  volumes:
+  - name: kaniko-secret
+    secret:
+      secretName: regcred  # This is your Docker registry secret (must exist in the same namespace)
+"""
+            defaultContainer 'kaniko'
+        }
+    }
+
 
     environment {
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api' // Replace with your image name
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
+        IMAGE = "jkendall1975/demo-api:v${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
     }
 
     stages {
@@ -29,17 +53,15 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build with Kaniko') {
             steps {
-                script {
-                    // Define the image name and tag
-                    def imageName = 'gcr.io/your-project/demo-api'
-                    def tag = "${imageName}:v${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
-
-                    // Use Kaniko to build the image
-                    sh """
-                        /kaniko/executor --context $PWD --dockerfile $PWD/Dockerfile --destination ${tag}
-                    """
+                container('kaniko') {
+                    sh '''
+                        /kaniko/executor \
+                          --context `pwd` \
+                          --dockerfile `pwd`/Dockerfile \
+                          --destination=${IMAGE}
+                    '''
                 }
             }
         }
