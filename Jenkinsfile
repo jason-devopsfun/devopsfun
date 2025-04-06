@@ -57,7 +57,7 @@ spec:
         stage('Build Application') {
             steps {
                 container('gradle') {
-                    sh 'cd devopsfun/demo-api && ./gradlew clean build'
+                    sh 'cd demo-api && ./gradlew clean build'
                 }
             }
         }
