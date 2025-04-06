@@ -4,6 +4,7 @@ pipeline {
     environment {
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api' // Replace with your image name
+        DOCKER_CLI_EXPERIMENTAL = 'enabled'
     }
 
     stages {
@@ -31,14 +32,13 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Dynamically generate a tag based on the current Git commit hash or Jenkins build number
-                    def imageName = 'jkendall1975/demo-api'
-                    def buildTag = "${imageName}:v${env.BUILD_NUMBER}-${env.BRANCH_NAME}-${env.GIT_COMMIT.take(7)}" // Using build number, branch name, and commit hash
-                    def latestTag = "${imageName}:latest"
+                    // Define the image name and tag
+                    def imageName = 'gcr.io/your-project/demo-api'
+                    def tag = "${imageName}:v${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
 
-                    // Build the Docker image using BuildKit
+                    // Use Kaniko to build the image
                     sh """
-                        docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t ${buildTag} -t ${latestTag} .
+                        /kaniko/executor --context $PWD --dockerfile $PWD/Dockerfile --destination ${tag}
                     """
                 }
             }
