@@ -9,7 +9,9 @@ spec:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
     command:
-    - cat
+    - sleep
+    args:
+    - "99999"
     tty: true
     volumeMounts:
     - name: kaniko-secret
