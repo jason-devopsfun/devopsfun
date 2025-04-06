@@ -1,5 +1,5 @@
 pipeline {
-    agent {
+      agent {
         kubernetes {
             yaml """
 apiVersion: v1
@@ -8,23 +8,17 @@ spec:
   containers:
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
-    command:
-    - sleep
-    args:
-    - "99999"
-    tty: true
     volumeMounts:
     - name: kaniko-secret
       mountPath: /kaniko/.docker
   volumes:
   - name: kaniko-secret
     secret:
-      secretName: regcred  # This is your Docker registry secret (must exist in the same namespace)
+      secretName: regcred  # <-- Your Docker registry secret here
 """
             defaultContainer 'kaniko'
         }
     }
-
 
     environment {
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
