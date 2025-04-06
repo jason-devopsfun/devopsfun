@@ -28,24 +28,18 @@ pipeline {
             }
         }
 
-        stage('Build and Push Docker Image') {
+        stage('Build') {
             steps {
-                dir('devopsfun/demo-api') {
                 script {
-                    def version = "v1.0.${BUILD_NUMBER}-${new Date().format('yyyyMMdd-HHmmss')}"
+                    // Dynamically generate a tag based on the current Git commit hash or Jenkins build number
+                    def imageName = 'jkendall1975/demo-api'
+                    def buildTag = "${imageName}:v${env.BUILD_NUMBER}-${env.BRANCH_NAME}-${env.GIT_COMMIT.take(7)}" // Using build number, branch name, and commit hash
+                    def latestTag = "${imageName}:latest"
 
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', 
-                                                      usernameVariable: 'DOCKER_HUB_USERNAME', 
-                                                      passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
-                        sh "echo ${DOCKER_HUB_PASSWORD} | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin"
-
-                        sh "docker build -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${version} -t ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest ."
-                        sh "docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:${version}"
-                        sh "docker push ${DOCKER_HUB_USERNAME}/${DOCKER_IMAGE_NAME}:latest"
-                    }
-
-                    env.IMAGE_VERSION = version
-                }
+                    // Build the Docker image using BuildKit
+                    sh """
+                        docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t ${buildTag} -t ${latestTag} .
+                    """
                 }
             }
         }
