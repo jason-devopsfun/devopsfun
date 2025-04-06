@@ -67,22 +67,26 @@ spec:
             }
         }
 
+        stage('Prepare Build Info') {
+            steps {
+                script {
+                    // Get short commit hash using the JNLP container
+                    env.SHORT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    env.IMAGE_TAG = "${BUILD_NUMBER}-${env.SHORT_COMMIT}"
+                    env.FULL_IMAGE_NAME = "jkendall1975/demo-api:${env.IMAGE_TAG}"
+                }
+            }
+        }
+
         stage('Build with Kaniko') {
             steps {
                 container('kaniko') {
-                    script {
-                        // Get short commit hash
-                        def shortCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                        def imageTag = "${BUILD_NUMBER}-${shortCommit}"
-                        def fullImageName = "jkendall1975/demo-api:${imageTag}"
-                        
-                        sh """
-                            /kaniko/executor \
-                              --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
-                              --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
-                              --destination=${fullImageName}
-                        """
-                    }
+                    sh """
+                        /kaniko/executor \
+                          --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
+                          --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
+                          --destination=${FULL_IMAGE_NAME}
+                    """
                 }
             }
         }
