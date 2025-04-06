@@ -19,12 +19,12 @@ spec:
     - name: workspace-volume
       mountPath: /home/gradle/project
   - name: kaniko
-    image: gcr.io/kaniko-project/executor:latest
-    imagePullPolicy: Always
+    image: gcr.io/kaniko-project/executor:debug  # Using debug version which has shell
     command:
-    - sleep
+    - /busybox/sh
     args:
-    - 9999999
+    - -c
+    - while true; do sleep 30; done
     volumeMounts:
     - name: workspace-volume
       mountPath: /workspace
