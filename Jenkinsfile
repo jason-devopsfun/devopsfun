@@ -6,18 +6,35 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
+  - name: jnlp
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /home/jenkins/agent
+  - name: gradle
+    image: gradle:7.4.2-jdk11
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: workspace-volume
+      mountPath: /home/gradle/project
   - name: kaniko
     image: gcr.io/kaniko-project/executor:latest
-    workingDir: /workspace
+    command:
+    - /busybox/cat
+    tty: true
     volumeMounts:
+    - name: workspace-volume
+      mountPath: /workspace
     - name: kaniko-secret
       mountPath: /kaniko/.docker
   volumes:
+  - name: workspace-volume
+    emptyDir: {}
   - name: kaniko-secret
     secret:
-      secretName: regcred  # <-- Your Docker registry secret here
+      secretName: regcred
 """
-            defaultContainer 'kaniko'
         }
     }
 
@@ -25,27 +42,20 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
-        IMAGE = "jkendall1975/demo-api:\${BUILD_NUMBER}-\${GIT_COMMIT}"
+        IMAGE = "jkendall1975/demo-api:\${BUILD_NUMBER}-\${GIT_COMMIT[0..7]}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: '630f1da7-84c6-4eaa-a187-475d170d1886', 
-                                                      usernameVariable: 'GIT_USERNAME', 
-                                                      passwordVariable: 'GIT_PASSWORD')]) {
-                        def githubUrl = GITHUB_REPO.replace('https://', "https://${GIT_USERNAME}:${GIT_PASSWORD}@")
-                        sh "git clone ${githubUrl}"
-                    }
-                }
+                checkout scm
             }
         }
 
         stage('Build Application') {
             steps {
-                dir('devopsfun/demo-api') {
-                    sh './gradlew clean build'
+                container('gradle') {
+                    sh 'cd devopsfun/demo-api && ./gradlew clean build'
                 }
             }
         }
@@ -53,14 +63,12 @@ spec:
         stage('Build with Kaniko') {
             steps {
                 container('kaniko') {
-                    dir('devopsfun/demo-api') {
-                        sh '''
-                          /kaniko/executor \
-                            --context=/workspace/devopsfun/demo-api \
-                            --dockerfile=/workspace/devopsfun/demo-api/Dockerfile \
-                            --destination=${IMAGE}
-                        '''
-                    }
+                    sh """
+                        /kaniko/executor \
+                          --context=\$PWD/devopsfun/demo-api \
+                          --dockerfile=\$PWD/devopsfun/demo-api/Dockerfile \
+                          --destination=${IMAGE}
+                    """
                 }
             }
         }
