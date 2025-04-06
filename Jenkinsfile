@@ -31,17 +31,12 @@ spec:
     volumeMounts:
     - name: workspace-volume
       mountPath: /workspace
-    - name: kaniko-secret
-      mountPath: /kaniko/.docker
     - name: workspace-volume
       mountPath: /home/jenkins/agent
       readOnly: false
   volumes:
   - name: workspace-volume
     emptyDir: {}
-  - name: kaniko-secret
-    secret:
-      secretName: regcred
 """
         }
     }
@@ -50,6 +45,7 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub') // Create this credential in Jenkins
     }
 
     stages {
@@ -70,11 +66,19 @@ spec:
         stage('Prepare Build Info') {
             steps {
                 script {
-                    // Get short commit hash using the JNLP container
                     env.SHORT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     env.IMAGE_TAG = "${BUILD_NUMBER}-${env.SHORT_COMMIT}"
                     env.FULL_IMAGE_NAME = "jkendall1975/demo-api:${env.IMAGE_TAG}"
                 }
+            }
+        }
+
+        stage('Create Docker Config') {
+            steps {
+                sh '''
+                    mkdir -p /home/jenkins/agent/workspace/docker-config
+                    echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}'  > /home/jenkins/agent/workspace/docker-config/config.json
+                '''
             }
         }
 
@@ -85,7 +89,8 @@ spec:
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
-                          --destination=${FULL_IMAGE_NAME}
+                          --destination=${FULL_IMAGE_NAME} \
+                          --dockerconfig=/home/jenkins/agent/workspace/docker-config
                     """
                 }
             }
