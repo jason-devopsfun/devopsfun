@@ -28,18 +28,21 @@ spec:
     args:
     - -c
     - while true; do sleep 30; done
+    env:
+    - name: DOCKER_CONFIG
+      value: /kaniko/.docker
     volumeMounts:
     - name: workspace-volume
       mountPath: /workspace
     - name: workspace-volume
       mountPath: /home/jenkins/agent
       readOnly: false
-    - name: kaniko-docker-config
+    - name: docker-config
       mountPath: /kaniko/.docker
   volumes:
   - name: workspace-volume
     emptyDir: {}
-  - name: kaniko-docker-config
+  - name: docker-config
     emptyDir: {}
 """
         }
@@ -49,7 +52,7 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     }
 
     stages {
@@ -77,19 +80,15 @@ spec:
             }
         }
 
-        stage('Setup Docker Config') {
-            steps {
-                sh '''
-                    mkdir -p /kaniko/.docker
-                    echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}'  > /kaniko/.docker/config.json
-                    chmod 600 /kaniko/.docker/config.json
-                '''
-            }
-        }
-
-        stage('Build with Kaniko') {
+        stage('Build and Push with Kaniko') {
             steps {
                 container('kaniko') {
+                    // Create Docker config file inside the Kaniko container
+                    sh '''
+                        echo "{\"auths\":{\"https://index.docker.io/v2/\":{\"auth\":\"$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)\"}}}" > /kaniko/.docker/config.json
+                    '''
+                    
+                    // Build and push the image
                     sh """
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
