@@ -34,8 +34,12 @@ spec:
     - name: workspace-volume
       mountPath: /home/jenkins/agent
       readOnly: false
+    - name: kaniko-docker-config
+      mountPath: /kaniko/.docker
   volumes:
   - name: workspace-volume
+    emptyDir: {}
+  - name: kaniko-docker-config
     emptyDir: {}
 """
         }
@@ -45,6 +49,7 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     }
 
     stages {
@@ -72,6 +77,16 @@ spec:
             }
         }
 
+        stage('Setup Docker Config') {
+            steps {
+                sh '''
+                    mkdir -p /kaniko/.docker
+                    echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}'  > /kaniko/.docker/config.json
+                    chmod 600 /kaniko/.docker/config.json
+                '''
+            }
+        }
+
         stage('Build with Kaniko') {
             steps {
                 container('kaniko') {
@@ -79,8 +94,7 @@ spec:
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
-                          --no-push \
-                          --tarPath=/home/jenkins/agent/workspace/demo-api-pipeline/image.tar
+                          --destination=${FULL_IMAGE_NAME}
                     """
                 }
             }
