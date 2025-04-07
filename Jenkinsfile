@@ -52,7 +52,7 @@ spec:
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
         DOCKER_CLI_EXPERIMENTAL = 'enabled'
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
     }
 
     stages {
@@ -83,9 +83,10 @@ spec:
         stage('Build and Push with Kaniko') {
             steps {
                 container('kaniko') {
-                    // Create Docker config file inside the Kaniko container
+                    // Create Docker config file inside the Kaniko container with proper JSON format
                     sh '''
-                        echo "{\"auths\":{\"https://index.docker.io/v2/\":{\"auth\":\"$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)\"}}}" > /kaniko/.docker/config.json
+                        echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}' > /kaniko/.docker/config.json
+                        cat /kaniko/.docker/config.json
                     '''
                     
                     // Build and push the image
