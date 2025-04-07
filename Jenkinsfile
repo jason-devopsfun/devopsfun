@@ -84,7 +84,7 @@ spec:
                         mkdir -p /kaniko/.docker
                         
                         # Create a proper config.json file
-                        echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)'"}}}' > /kaniko/.docker/config.json
+                        echo '{"auths":{"https://index.docker.io":{"auth":"'$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)'"}}}' > /kaniko/.docker/config.json
                         
                         # Build and push the image
                         /kaniko/executor \
