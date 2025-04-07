@@ -104,5 +104,32 @@ spec:
                 }
             }
         }
+
+        stage('Update Helm Chart Image Tag') {
+            steps {
+                container('jnlp') {
+                    script {
+                        // Configure git user
+                        sh '''
+                            git config --global user.email "jenkins@example.com"
+                            git config --global user.name "Jenkins"
+                        '''
+
+                        // Update values.yaml with new image tag
+                        sh """
+                            sed -i 's/tag: .*/tag: ${env.IMAGE_TAG}/' helm-api/values.yaml
+                        """
+
+                        // Stage, commit, and push changes
+                        sh '''
+                            git add helm-api/values.yaml
+                            git commit -m "Update image tag to ${env.IMAGE_TAG}"
+                            git push ${GITHUB_REPO} HEAD:main
+                        '''
+                    }
+                }
+            }
+        }
+
     }
 }
