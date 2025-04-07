@@ -85,6 +85,8 @@ spec:
                 container('kaniko') {
                     // Create Docker config file inside the Kaniko container with proper JSON format
                     sh '''
+                        echo "Docker Hub Username: $DOCKERHUB_CREDENTIALS_USR"
+                        echo "Docker Hub Password: $DOCKERHUB_CREDENTIALS_PSW"
                         echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}' > /kaniko/.docker/config.json
                         cat /kaniko/.docker/config.json
                     '''
