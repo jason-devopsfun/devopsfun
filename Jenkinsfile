@@ -77,18 +77,21 @@ spec:
             steps {
                 container('kaniko') {
                     sh '''
-                        echo "Docker Hub Username: $DOCKERHUB_CREDENTIALS_USR"
-                        echo "Docker Hub Password: $DOCKERHUB_CREDENTIALS_PSW"
+                      
                         echo "FULL IMAGE NAME: $FULL_IMAGE_NAME"
                         
+                        # Create the .docker directory
+                        mkdir -p /kaniko/.docker
+                        
+                        # Create a proper config.json file
+                        echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)'"}}}' > /kaniko/.docker/config.json
+                        
+                        # Build and push the image
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
                           --destination=${FULL_IMAGE_NAME} \
-                          --verbosity=debug \
-                          --skip-tls-verify \
-                          --registry-username=${DOCKERHUB_CREDENTIALS_USR} \
-                          --registry-password=${DOCKERHUB_CREDENTIALS_PSW}
+                          --verbosity=debug
                     '''
                 }
             }
