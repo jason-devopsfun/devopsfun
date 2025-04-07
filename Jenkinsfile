@@ -107,7 +107,7 @@ spec:
 
      stage('Update Helm Chart Image Tag') {
             steps {
-                withCredentials([usernamePassword(credentialsId: '630f1da7-84c6-4eaa-a187-475d170d1886', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                     container('jnlp') {
                         script {
                             // Configure git user
