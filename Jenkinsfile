@@ -99,8 +99,7 @@ spec:
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
-                          --destination=${FULL_IMAGE_NAME} \
-                          --verbosity=debug
+                          --destination=${FULL_IMAGE_NAME}
                     """
                 }
             }
