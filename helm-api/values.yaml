@@ -5,10 +5,8 @@
 replicaCount: 3
 
 image:
-  repository: springio/gs-spring-boot-docker
-  tag: latest
-  # repository: gcr.io/heptio-images/ks-guestbook-demo
-  # tag: 0.1
+  repository: jkendall1975/demo-api
+  tag: 61-3f753b8
   pullPolicy: IfNotPresent
 
 service:
