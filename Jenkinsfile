@@ -95,7 +95,7 @@ spec:
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
                           --destination=${FULL_IMAGE_NAME}
-                    """
+                    '''
                 }
             }
         }
