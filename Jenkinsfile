@@ -105,27 +105,29 @@ spec:
             }
         }
 
-    stage('Update Helm Chart Image Tag') {
+     stage('Update Helm Chart Image Tag') {
             steps {
-                container('jnlp') {
-                    script {
-                        // Configure git user
-                        sh '''
-                            git config --global user.email "jenkins@example.com"
-                            git config --global user.name "Jenkins"
-                        '''
+                withCredentials([usernamePassword(credentialsId: '630f1da7-84c6-4eaa-a187-475d170d1886', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    container('jnlp') {
+                        script {
+                            // Configure git user
+                            sh '''
+                                git config --global user.email "jenkins@example.com"
+                                git config --global user.name "Jenkins"
+                            '''
 
-                        // Update values.yaml with new image tag
-                        sh """
-                            sed -i 's/tag: .*/tag: ${IMAGE_TAG}/' helm-api/values.yaml
-                        """
+                            // Update values.yaml with new image tag
+                            sh """
+                                sed -i 's/tag: .*/tag: ${IMAGE_TAG}/' helm-api/values.yaml
+                            """
 
-                        // Stage, commit, and push changes
-                        sh """
-                            git add helm-api/values.yaml
-                            git commit -m "Update image tag to ${IMAGE_TAG}"
-                            git push https://${GITHUB_CREDENTIALS_USR}:${GITHUB_CREDENTIALS_PSW}@github.com/jason-devopsfun/devopsfun.git HEAD:main
-                        """
+                            // Stage, commit, and push changes
+                            sh """
+                                git add helm-api/values.yaml
+                                git commit -m "Update image tag to ${IMAGE_TAG}"
+                                git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/jason-devopsfun/devopsfun.git HEAD:main
+                            """
+                        }
                     }
                 }
             }
