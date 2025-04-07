@@ -93,6 +93,7 @@ spec:
                     
                     // Build and push the image
                     sh """
+                        echo "FULL IMAGE NAME: $FULL_IMAGE_NAME"
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
