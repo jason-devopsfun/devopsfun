@@ -6,7 +6,7 @@ replicaCount: 3
 
 image:
   repository: jkendall1975/demo-api
-  tag: 75-84cd3a6
+  tag: 76-dfefea4
   pullPolicy: IfNotPresent
 
 service:
