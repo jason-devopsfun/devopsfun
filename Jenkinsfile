@@ -28,6 +28,9 @@ spec:
     args:
     - -c
     - while true; do sleep 30; done
+    env:
+    - name: DOCKER_CONFIG
+      value: /kaniko/.docker
     volumeMounts:
     - name: workspace-volume
       mountPath: /workspace
@@ -44,7 +47,6 @@ spec:
     environment {
         GITHUB_REPO = 'https://github.com/jason-devopsfun/devopsfun.git'
         DOCKER_IMAGE_NAME = 'demo-api'
-        DOCKER_CLI_EXPERIMENTAL = 'enabled'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
 
@@ -73,26 +75,33 @@ spec:
             }
         }
 
-        stage('Build and Push with Kaniko') {
+        stage('Build and Push Image') {
             steps {
                 container('kaniko') {
+                    // Create a correctly formatted Docker config
                     sh '''
-                      
-                        echo "FULL IMAGE NAME: $FULL_IMAGE_NAME"
-                        
-                        # Create the .docker directory
                         mkdir -p /kaniko/.docker
                         
-                        # Create a proper config.json file
-                        echo '{"auths":{"https://index.docker.io":{"auth":"'$(echo -n $DOCKERHUB_CREDENTIALS_USR:$DOCKERHUB_CREDENTIALS_PSW | base64)'"}}}' > /kaniko/.docker/config.json
+                        echo '{
+                          "auths": {
+                            "https://index.docker.io/v1/": {
+                              "auth": "'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"
+                            }
+                          }
+                        }' > /kaniko/.docker/config.json
                         
-                        # Build and push the image
+                        # Ensure right permissions
+                        chmod 600 /kaniko/.docker/config.json
+                    '''
+                    
+                    // Build and push
+                    sh """
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
                           --dockerfile=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api/Dockerfile \
                           --destination=${FULL_IMAGE_NAME} \
                           --verbosity=debug
-                    '''
+                    """
                 }
             }
         }
