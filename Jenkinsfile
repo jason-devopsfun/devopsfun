@@ -89,10 +89,7 @@ spec:
                         echo "Docker Hub Password: $DOCKERHUB_CREDENTIALS_PSW"
                         echo '{"auths":{"https://index.docker.io/v2/":{"auth":"'$(echo -n ${DOCKERHUB_CREDENTIALS_USR}:${DOCKERHUB_CREDENTIALS_PSW} | base64)'"}}}' > /kaniko/.docker/config.json
                         cat /kaniko/.docker/config.json
-                    '''
-                    
-                    // Build and push the image
-                    sh """
+                  
                         echo "FULL IMAGE NAME: $FULL_IMAGE_NAME"
                         /kaniko/executor \
                           --context=/home/jenkins/agent/workspace/demo-api-pipeline/demo-api \
